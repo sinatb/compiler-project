@@ -1,4 +1,4 @@
-goal : (instr)+
+goal : (instr)+ ;
 instr : ident "=" expr ";" | "type" "int" ident ("," ident)* ";" ;
 expr : term (( "+" | "-" ) term)* ;
 term : factor (( "*" | "/") factor)* ;
