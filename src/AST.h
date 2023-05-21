@@ -34,6 +34,9 @@ public:
 class Expr : public AST {
 public:
   Expr() {}
+  virtual bool isLiteralZero() {
+    return false;
+  }
 };
 
 class Factor : public Expr {
@@ -44,6 +47,17 @@ private:
   ValueKind Kind;
   llvm::StringRef Val;
 
+  bool isAllZero(llvm::StringRef v) {
+    std::string s = v.str();
+    for (auto i = 0; i < s.length(); i++) {
+      if (s.at(i) != '0') {
+        return false;
+      }
+    }
+
+    return true;
+  }
+  
 public:
   Factor(ValueKind Kind, llvm::StringRef Val)
       : Kind(Kind), Val(Val) {}
@@ -52,6 +66,10 @@ public:
   virtual void accept(ASTVisitor &V) override {
     V.visit(*this);
   }
+  virtual bool isLiteralZero() override {
+    return (Kind == Number && isAllZero(Val));
+  }
+
 };
 
 class BinaryOp : public Expr {

@@ -63,12 +63,60 @@ public:
     }
   }
 };
+
+class DivZeroCheck : public ASTVisitor {
+
+  bool HasError;
+
+public:
+
+  DivZeroCheck() : HasError(false) {}
+
+  bool hasError() { return HasError; }
+
+  void error() {
+    llvm::errs() << "Division by zero.\n";
+    HasError = true;
+  }
+
+  virtual void visit(BinaryOp &Node) override {
+    if (Node.getOperator() == BinaryOp::Div && Node.getRight()->isLiteralZero()) {
+      error();
+    }
+  };
+
+  virtual void visit(Factor &Node) override {
+    // ignore
+  }
+
+  virtual void visit(Instructions &Node) override {
+    for (auto I = Node.begin(), E = Node.end(); I != E; I++) {
+      (*I)->accept(*this);
+    }
+  }
+
+  virtual void visit(TypeDecl &Node) override {
+    // ignore
+  }
+
+  virtual void visit(Assign &Node) override {
+    if (Node.getExpr())
+      Node.getExpr()->accept(*this);
+    else
+      HasError = true;
+  }
+
+};
 }
 
 bool Sema::semantic(AST *Tree) {
   if (!Tree)
     return false;
-  DeclCheck Check;
-  Tree->accept(Check);
-  return Check.hasError();
+  DeclCheck decCheck;
+  Tree->accept(decCheck);
+
+  DivZeroCheck divZeroCheck;
+  Tree->accept(divZeroCheck);
+
+  return decCheck.hasError() || divZeroCheck.hasError();
 }
