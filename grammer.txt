@@ -1,0 +1,7 @@
+goal : (instr)+
+instr : ident "=" expr ";" | "type" "int" ident ("," ident)* ";" ;
+expr : term (( "+" | "-" ) term)* ;
+term : factor (( "*" | "/") factor)* ;
+factor : ident | number | "(" expr ")" ;
+ident : ([a-zAZ])+ ;
+number : ([0-9])+ ;
