@@ -29,7 +29,8 @@ void Lexer::next(Token &token) {
       ++end;
     llvm::StringRef Name(BufferPtr, end - BufferPtr);
     Token::TokenKind kind =
-        Name == "with" ? Token::KW_with : Token::ident;
+        Name == "type" ? Token::KW_type :
+        Name == "int" ? Token::KW_int : Token::ident;
     formToken(token, end, kind);
     return;
   } else if (charinfo::isDigit(*BufferPtr)) {
@@ -48,8 +49,9 @@ CASE('*', Token::star);
 CASE('/', Token::slash);
 CASE('(', Token::Token::l_paren);
 CASE(')', Token::Token::r_paren);
-CASE(':', Token::Token::colon);
+CASE(';', Token::Token::semi_colon);
 CASE(',', Token::Token::comma);
+CASE('=', Token::equal);
 #undef CASE
     default:
       formToken(token, BufferPtr + 1, Token::unknown);

@@ -32,7 +32,10 @@ class Parser {
     return false;
   }
 
-  AST *parseCalc();
+  Instructions *parseGoal();
+  Instruction *parseInstruction();
+  TypeDecl *parseDeclaration();
+  Assign *parseAssignment();
   Expr *parseExpr();
   Expr *parseTerm();
   Expr *parseFactor();

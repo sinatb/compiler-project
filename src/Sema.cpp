@@ -39,17 +39,29 @@ public:
       HasError = true;
   };
 
-  virtual void visit(WithDecl &Node) override {
+  virtual void visit(TypeDecl &Node) override {
     for (auto I = Node.begin(), E = Node.end(); I != E;
          ++I) {
       if (!Scope.insert(*I).second)
         error(Twice, *I);
     }
-    if (Node.getExpr())
-      Node.getExpr()->accept(*this);
-    else
-      HasError = true;
   };
+
+  virtual void visit(Assign &Node) override {
+      if (Scope.find(Node.getIdent()) == Scope.end())
+        error(Not, Node.getIdent());
+
+      if (Node.getExpr())
+        Node.getExpr()->accept(*this);
+      else
+        HasError = true;
+  }
+
+  virtual void visit(Instructions &Node) override {
+    for (auto I = Node.begin(), E = Node.end(); I != E; I++) {
+      (*I)->accept(*this);
+    }
+  }
 };
 }
 

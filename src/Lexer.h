@@ -16,14 +16,16 @@ public:
     ident,
     number,
     comma,
-    colon,
+    semi_colon,
     plus,
     minus,
     star,
     slash,
+    equal,
     l_paren,
     r_paren,
-    KW_with
+    KW_type,
+    KW_int
   };
 
 private:

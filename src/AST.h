@@ -8,7 +8,10 @@ class AST;
 class Expr;
 class Factor;
 class BinaryOp;
-class WithDecl;
+class Instructions;
+class Instruction;
+class TypeDecl;
+class Assign;
 
 class ASTVisitor {
 public:
@@ -16,7 +19,10 @@ public:
   virtual void visit(Expr &){};
   virtual void visit(Factor &) = 0;
   virtual void visit(BinaryOp &) = 0;
-  virtual void visit(WithDecl &) = 0;
+  virtual void visit(Instructions &) = 0;
+  virtual void visit(Instruction &) {};
+  virtual void visit(TypeDecl &) = 0;
+  virtual void visit(Assign &) = 0;
 };
 
 class AST {
@@ -68,17 +74,50 @@ public:
   }
 };
 
-class WithDecl : public AST {
+class Instruction : public AST {
+public:
+  Instruction() {}
+};
+
+class Instructions : public AST {
+  using InstrVector = llvm::SmallVector<Instruction *, 8>;
+  InstrVector Instrs;
+
+public:
+  Instructions(llvm::SmallVector<Instruction *, 8> Instrs)
+      : Instrs(Instrs) {}
+  InstrVector::const_iterator begin() { return Instrs.begin(); }
+  InstrVector::const_iterator end() { return Instrs.end(); }
+
+  virtual void accept(ASTVisitor &V) override {
+    V.visit(*this);
+  }
+};
+
+class TypeDecl : public Instruction {
   using VarVector = llvm::SmallVector<llvm::StringRef, 8>;
   VarVector Vars;
+
+public:
+  TypeDecl(llvm::SmallVector<llvm::StringRef, 8> Vars)
+      : Vars(Vars) {}
+  VarVector::const_iterator begin() { return Vars.begin(); }
+  VarVector::const_iterator end() { return Vars.end(); }
+
+  virtual void accept(ASTVisitor &V) override {
+    V.visit(*this);
+  }
+};
+
+class Assign : public Instruction {
+  llvm::StringRef Ident;
   Expr *E;
 
 public:
-  WithDecl(llvm::SmallVector<llvm::StringRef, 8> Vars,
-           Expr *E)
-      : Vars(Vars), E(E) {}
-  VarVector::const_iterator begin() { return Vars.begin(); }
-  VarVector::const_iterator end() { return Vars.end(); }
+  Assign(llvm::StringRef Ident, Expr *E)
+      : Ident(Ident), E(E) {}
+
+  llvm::StringRef getIdent() { return Ident; }
   Expr *getExpr() { return E; }
   virtual void accept(ASTVisitor &V) override {
     V.visit(*this);

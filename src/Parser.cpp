@@ -1,41 +1,76 @@
 #include "Parser.h"
 
 AST *Parser::parse() {
-  AST *Res = parseCalc();
+  AST *Res = parseGoal();
   expect(Token::eoi);
   return Res;
 }
 
-AST *Parser::parseCalc() {
-  Expr *E;
+Instructions *Parser::parseGoal() {
+  llvm::SmallVector<Instruction *, 8> Instrs;
+
+  while (!Tok.is(Token::eoi))
+  {
+    Instruction *I = parseInstruction();
+    Instrs.push_back(I);
+  }
+
+  return new Instructions(Instrs);
+
+}
+
+Instruction *Parser::parseInstruction() {
+  if (Tok.is(Token::KW_type)) {
+    return parseDeclaration();
+  }
+
+  return parseAssignment();
+
+}
+
+Assign *Parser::parseAssignment() {
+  if (expect(Token::ident))
+    return nullptr;
+  
+  llvm::StringRef identifier = Tok.getText();
+  advance();
+
+  if (consume(Token::equal))
+    return nullptr;
+  
+  Expr *E = parseExpr();
+
+  if (consume(Token::semi_colon))
+    return nullptr;
+  
+  return new Assign(identifier, E);
+}
+
+TypeDecl *Parser::parseDeclaration() {
+  if (consume(Token::KW_type))
+    return nullptr;
+
+  if (expect(Token::KW_int))
+    return nullptr;
+  
+  advance();
+  if (expect(Token::ident))
+    return nullptr;
+  
   llvm::SmallVector<llvm::StringRef, 8> Vars;
-  if (Tok.is(Token::KW_with)) {
+  Vars.push_back(Tok.getText());
+  advance();
+  while (Tok.is(Token::comma)) {
     advance();
     if (expect(Token::ident))
-      goto _error;
+      return nullptr;
     Vars.push_back(Tok.getText());
     advance();
-    while (Tok.is(Token::comma)) {
-      advance();
-      if (expect(Token::ident))
-        goto _error;
-      Vars.push_back(Tok.getText());
-      advance();
-    }
-    if (consume(Token::colon))
-      goto _error;
   }
-  E = parseExpr();
-  if (expect(Token::eoi))
-    goto _error;
-  if (Vars.empty())
-    return E;
-  else
-    return new WithDecl(Vars, E);
-_error:
-  while (Tok.getKind() != Token::eoi)
-    advance();
-  return nullptr;
+  if (consume(Token::semi_colon))
+    return nullptr;
+
+  return new TypeDecl(Vars);
 }
 
 Expr *Parser::parseExpr() {
